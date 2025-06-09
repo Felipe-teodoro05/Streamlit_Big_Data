@@ -8,6 +8,7 @@ import numpy as np
 # Configuração da página
 st.set_page_config(
     page_title="German Credit Data Dashboard",
+    page_icon="💳",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -76,7 +77,6 @@ st.markdown("""
         gap: 24px;
     }
     
-    /* CSS Corrigido para as abas inativas */
     .stTabs [data-baseweb="tab"] {
         height: 50px;
         white-space: pre-wrap;
@@ -86,11 +86,10 @@ st.markdown("""
         padding-top: 10px;
         padding-bottom: 10px;
         border: 2px solid #e9ecef;
-        color: #4f4f4f; /* <-- Cor escura adicionada para o texto */
-        font-weight: bold; /* <-- Negrito adicionado para dar ênfase */
+        color: #4f4f4f;
+        font-weight: bold;
     }
     
-    /* CSS para a aba selecionada (permanece o mesmo) */
     .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -113,12 +112,12 @@ def load_data():
 df = load_data()
 
 # Título principal
-st.markdown('<h1 class="main-header">German Credit Data Dashboard</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">💳 German Credit Data Dashboard</h1>', unsafe_allow_html=True)
 
 # Informações sobre o dataset
 st.markdown("""
 <div class="info-box">
-<h3>Sobre o Dataset</h3>
+<h3>📊 Sobre o Dataset</h3>
 Este dashboard apresenta uma análise abrangente do dataset Statlog (German Credit Data) da UCI Machine Learning Repository. 
 O dataset contém informações sobre 1.000 solicitantes de crédito alemães, classificados como bom ou mau risco de crédito 
 com base em 20 atributos diferentes.
@@ -126,7 +125,7 @@ com base em 20 atributos diferentes.
 """, unsafe_allow_html=True)
 
 # Sidebar com filtros
-st.sidebar.markdown("## Filtros")
+st.sidebar.markdown("## 🎛️ Filtros")
 
 # Filtro de risco
 risk_filter = st.sidebar.multiselect(
@@ -163,7 +162,7 @@ filtered_df = df[
 st.sidebar.markdown(f"**Registros exibidos:** {len(filtered_df)} de {len(df)}")
 
 # Métricas principais
-st.markdown('<h2 class="sub-header">Métricas Principais</h2>', unsafe_allow_html=True)
+st.markdown('<h2 class="sub-header">📈 Métricas Principais</h2>', unsafe_allow_html=True)
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -203,10 +202,10 @@ with col4:
     """, unsafe_allow_html=True)
 
 # Abas para organizar o conteúdo
-tab1, tab2, tab3, tab4 = st.tabs(["Análise de Risco", "Demografia", "Análise Financeira", "Características Sociais"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Análise de Risco", "👥 Demografia", "💰 Análise Financeira", "🏠 Características Sociais"])
 
 with tab1:
-    st.markdown('<h2 class="sub-header">Análise de Risco de Crédito</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header">📊 Análise de Risco de Crédito</h2>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -237,8 +236,7 @@ with tab1:
             y=[risk_by_age['Good Risk'], risk_by_age['Bad Risk']],
             title="Distribuição de Risco por Faixa Etária (%)",
             labels={'x': 'Faixa Etária', 'y': 'Percentual'},
-            color_discrete_sequence=['#2ecc71', '#e74c3c'],
-            text_auto=True
+            color_discrete_sequence=['#2ecc71', '#e74c3c']
         )
         fig_age_risk.update_layout(
             barmode='stack',
@@ -251,14 +249,14 @@ with tab1:
     bad_risk_pct = (filtered_df['risk'] == 'Bad Risk').mean() * 100
     st.markdown(f"""
     <div class="insight-box">
-    <h4>Insight Principal</h4>
+    <h4>💡 Insight Principal</h4>
     {bad_risk_pct:.1f}% dos solicitantes são classificados como mau risco de crédito. 
     A análise por faixa etária mostra que clientes mais jovens (18-30 anos) tendem a ter maior proporção de mau risco.
     </div>
     """, unsafe_allow_html=True)
 
 with tab2:
-    st.markdown('<h2 class="sub-header"> Análise Demográfica</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header">👥 Análise Demográfica</h2>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -287,8 +285,7 @@ with tab2:
             orientation='h',
             title="Status Pessoal e Sexo",
             labels={'x': 'Quantidade', 'y': 'Status'},
-            color_discrete_sequence=['#9b59b6'],
-            text_auto=True
+            color_discrete_sequence=['#9b59b6']
         )
         fig_personal.update_layout(
             font=dict(size=14),
@@ -299,7 +296,7 @@ with tab2:
     # Estatísticas demográficas
     st.markdown(f"""
     <div class="insight-box">
-    <h4>Estatísticas Demográficas</h4>
+    <h4>📈 Estatísticas Demográficas</h4>
     • Idade média: {filtered_df['age_in_years'].mean():.1f} anos<br>
     • Idade mínima: {filtered_df['age_in_years'].min()} anos<br>
     • Idade máxima: {filtered_df['age_in_years'].max()} anos<br>
@@ -308,7 +305,7 @@ with tab2:
     """, unsafe_allow_html=True)
 
 with tab3:
-    st.markdown('<h2 class="sub-header">Análise Financeira</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header">💰 Análise Financeira</h2>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -381,7 +378,7 @@ with tab3:
         st.plotly_chart(fig_saving, use_container_width=True)
 
 with tab4:
-    st.markdown('<h2 class="sub-header">Características Sociais</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header">🏠 Características Sociais</h2>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -394,8 +391,7 @@ with tab4:
             orientation='h',
             title="Propósito do Crédito",
             labels={'x': 'Quantidade', 'y': 'Propósito'},
-            color_discrete_sequence=['#1abc9c'],
-            text_auto=True
+            color_discrete_sequence=['#1abc9c']
         )
         fig_purpose.update_layout(
             font=dict(size=14),
@@ -426,8 +422,7 @@ with tab4:
             y=employment_counts.values,
             title="Status de Emprego",
             labels={'x': 'Status de Emprego', 'y': 'Quantidade'},
-            color_discrete_sequence=['#ff9ff3'],
-            text_auto=True
+            color_discrete_sequence=['#ff9ff3']
         )
         fig_employment.update_layout(
             font=dict(size=14),
@@ -437,7 +432,7 @@ with tab4:
         st.plotly_chart(fig_employment, use_container_width=True)
 
 # Seção de análise avançada
-st.markdown('<h2 class="sub-header">Análise Avançada</h2>', unsafe_allow_html=True)
+st.markdown('<h2 class="sub-header">🔍 Análise Avançada</h2>', unsafe_allow_html=True)
 
 # Matriz de correlação para variáveis numéricas
 numeric_cols = ['age_in_years', 'credit_amount', 'duration_in_month', 'installment_rate', 'residence_since', 'number_existing_credits', 'number_people_maintenance']
@@ -457,7 +452,7 @@ fig_corr.update_layout(
 st.plotly_chart(fig_corr, use_container_width=True)
 
 # Análise de risco por diferentes características
-st.markdown('<h3>Análise de Risco por Características</h3>', unsafe_allow_html=True)
+st.markdown('<h3>📊 Análise de Risco por Características</h3>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 
@@ -500,7 +495,7 @@ with col2:
 # Resumo final
 st.markdown(f"""
 <div class="info-box">
-<h3>Resumo Executivo</h3>
+<h3>📋 Resumo Executivo</h3>
 <p>Este dashboard analisou {len(df)} solicitantes de crédito alemães. Os principais insights incluem:</p>
 <ul>
 <li><strong>Taxa de Risco:</strong> {(df['risk'] == 'Bad Risk').mean()*100:.1f}% dos solicitantes são classificados como mau risco</li>
@@ -515,7 +510,7 @@ st.markdown(f"""
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #7f8c8d; font-size: 14px;">
-    German Credit Data Dashboard | Desenvolvido com Streamlit e Plotly | 
+    📊 German Credit Data Dashboard | Desenvolvido com Streamlit e Plotly | 
     Dados: UCI Machine Learning Repository
 </div>
 """, unsafe_allow_html=True)
