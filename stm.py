@@ -8,7 +8,6 @@ import numpy as np
 # Configuração da página
 st.set_page_config(
     page_title="German Credit Data Dashboard",
-    page_icon="💳",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -112,12 +111,12 @@ def load_data():
 df = load_data()
 
 # Título principal
-st.markdown('<h1 class="main-header">💳 German Credit Data Dashboard</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">German Credit Data Dashboard</h1>', unsafe_allow_html=True)
 
 # Informações sobre o dataset
 st.markdown("""
 <div class="info-box">
-<h3>📊 Sobre o Dataset</h3>
+<h3>Sobre o Dataset</h3>
 Este dashboard apresenta uma análise abrangente do dataset Statlog (German Credit Data) da UCI Machine Learning Repository. 
 O dataset contém informações sobre 1.000 solicitantes de crédito alemães, classificados como bom ou mau risco de crédito 
 com base em 20 atributos diferentes.
@@ -125,7 +124,7 @@ com base em 20 atributos diferentes.
 """, unsafe_allow_html=True)
 
 # Sidebar com filtros
-st.sidebar.markdown("## 🎛️ Filtros")
+st.sidebar.markdown("## Filtros")
 
 # Filtro de risco
 risk_filter = st.sidebar.multiselect(
@@ -162,7 +161,7 @@ filtered_df = df[
 st.sidebar.markdown(f"**Registros exibidos:** {len(filtered_df)} de {len(df)}")
 
 # Métricas principais
-st.markdown('<h2 class="sub-header">📈 Métricas Principais</h2>', unsafe_allow_html=True)
+st.markdown('<h2 class="sub-header">Métricas Principais</h2>', unsafe_allow_html=True)
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -202,10 +201,10 @@ with col4:
     """, unsafe_allow_html=True)
 
 # Abas para organizar o conteúdo
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Análise de Risco", "👥 Demografia", "💰 Análise Financeira", "🏠 Características Sociais"])
+tab1, tab2, tab3, tab4 = st.tabs(["Análise de Risco", "👥 Demografia", "💰 Análise Financeira", "🏠 Características Sociais"])
 
 with tab1:
-    st.markdown('<h2 class="sub-header">📊 Análise de Risco de Crédito</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header">Análise de Risco de Crédito</h2>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -296,7 +295,7 @@ with tab2:
     # Estatísticas demográficas
     st.markdown(f"""
     <div class="insight-box">
-    <h4>📈 Estatísticas Demográficas</h4>
+    <h4>Estatísticas Demográficas</h4>
     • Idade média: {filtered_df['age_in_years'].mean():.1f} anos<br>
     • Idade mínima: {filtered_df['age_in_years'].min()} anos<br>
     • Idade máxima: {filtered_df['age_in_years'].max()} anos<br>
@@ -305,7 +304,7 @@ with tab2:
     """, unsafe_allow_html=True)
 
 with tab3:
-    st.markdown('<h2 class="sub-header">💰 Análise Financeira</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header">Análise Financeira</h2>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -378,7 +377,7 @@ with tab3:
         st.plotly_chart(fig_saving, use_container_width=True)
 
 with tab4:
-    st.markdown('<h2 class="sub-header">🏠 Características Sociais</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header">Características Sociais</h2>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -432,7 +431,7 @@ with tab4:
         st.plotly_chart(fig_employment, use_container_width=True)
 
 # Seção de análise avançada
-st.markdown('<h2 class="sub-header">🔍 Análise Avançada</h2>', unsafe_allow_html=True)
+st.markdown('<h2 class="sub-header">Análise Avançada</h2>', unsafe_allow_html=True)
 
 # Matriz de correlação para variáveis numéricas
 numeric_cols = ['age_in_years', 'credit_amount', 'duration_in_month', 'installment_rate', 'residence_since', 'number_existing_credits', 'number_people_maintenance']
@@ -452,7 +451,7 @@ fig_corr.update_layout(
 st.plotly_chart(fig_corr, use_container_width=True)
 
 # Análise de risco por diferentes características
-st.markdown('<h3>📊 Análise de Risco por Características</h3>', unsafe_allow_html=True)
+st.markdown('<h3>Análise de Risco por Características</h3>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 
@@ -495,7 +494,7 @@ with col2:
 # Resumo final
 st.markdown(f"""
 <div class="info-box">
-<h3>📋 Resumo Executivo</h3>
+<h3>Resumo Executivo</h3>
 <p>Este dashboard analisou {len(df)} solicitantes de crédito alemães. Os principais insights incluem:</p>
 <ul>
 <li><strong>Taxa de Risco:</strong> {(df['risk'] == 'Bad Risk').mean()*100:.1f}% dos solicitantes são classificados como mau risco</li>
@@ -510,7 +509,7 @@ st.markdown(f"""
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #7f8c8d; font-size: 14px;">
-    📊 German Credit Data Dashboard | Desenvolvido com Streamlit e Plotly | 
+    German Credit Data Dashboard | Desenvolvido com Streamlit e Plotly | 
     Dados: UCI Machine Learning Repository
 </div>
 """, unsafe_allow_html=True)
