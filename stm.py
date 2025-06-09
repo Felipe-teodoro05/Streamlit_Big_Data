@@ -2,14 +2,12 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Configuração da página
 st.set_page_config(
     page_title="German Credit Data Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# CSS personalizado para melhorar a estética
 st.markdown("""
 <style>
     .main-header {
@@ -88,19 +86,179 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Função para carregar dados
+
 @st.cache_data
 def load_data():
+    """Carrega o dataset German Credit Data."""
     df = pd.read_csv("german_credit_data_treated.csv")
     return df
 
-# Carregar dados
+@st.cache_data
+def get_age_bins(df_age_in_years):
+    """Cria faixas etárias para a coluna 'age_in_years'."""
+    # Define os rótulos das faixas etárias de forma mais flexível
+    bins = [18, 31, 41, 51, 61, df_age_in_years.max() + 1] # Ajusta o último bin para incluir o max
+    labels = [f'{int(bins[i])}-{int(bins[i+1]-1)}' for i in range(len(bins)-2)] + [f'{int(bins[-2])}+']
+    
+    # Garante que pd.cut não gere erros se o df_age_in_years estiver vazio
+    if not df_age_in_years.empty:
+        age_bins = pd.cut(
+            df_age_in_years,
+            bins=bins,
+            right=False,
+            labels=labels,
+            include_lowest=True
+        )
+        age_bins.name = 'age_bins'
+        return age_bins
+    return pd.Series([], dtype='object') # Retorna uma série vazia com dtype compatível
+
+
+def plot_risk_distribution(df):
+    """Gera um gráfico de pizza da distribuição de risco."""
+    risk_counts = df['risk'].value_counts()
+    fig = px.pie(
+        values=risk_counts.values,
+        names=risk_counts.index,
+        title="Distribuição de Risco de Crédito",
+        color_discrete_map={'Good Risk': '#2ecc71', 'Bad Risk': '#e74c3c'}
+    )
+    fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_layout(font=dict(size=14), showlegend=True, height=400)
+    return fig
+
+def plot_risk_by_age(df):
+    """Gera um gráfico de barras empilhadas de risco por faixa etária."""
+    age_bins = get_age_bins(df['age_in_years'])
+    
+    # Garante que age_bins não esteja vazio antes de criar o crosstab
+    if age_bins.empty or df['risk'].empty:
+        return px.bar(title="Dados insuficientes para Risco por Faixa Etária")
+
+    # Cria um DataFrame temporário para o crosstab para evitar problemas com índices
+    temp_df = pd.DataFrame({'age_bins': age_bins, 'risk': df['risk']})
+    risk_by_age = pd.crosstab(temp_df['age_bins'], temp_df['risk'], normalize='index') * 100
+    
+    # Garante que todas as categorias de risco estejam presentes para evitar KeyError no melt
+    all_risks = ['Good Risk', 'Bad Risk']
+    for r in all_risks:
+        if r not in risk_by_age.columns:
+            risk_by_age[r] = 0.0
+    risk_by_age = risk_by_age[all_risks] # Garante a ordem das colunas
+
+    risk_by_age_long = risk_by_age.reset_index().melt(id_vars='age_bins', value_name='percentual', var_name='risk')
+
+    fig = px.bar(
+        risk_by_age_long,
+        x='age_bins',
+        y='percentual',
+        color='risk',
+        title="Distribuição de Risco por Faixa Etária (%)",
+        labels={'age_bins': 'Faixa Etária', 'percentual': 'Percentual (%)'},
+        color_discrete_map={'Good Risk': '#2ecc71', 'Bad Risk': '#e74c3c'}
+    )
+    fig.update_layout(barmode='stack', font=dict(size=14), height=400)
+    return fig
+
+def plot_age_distribution(df):
+    """Gera um histograma da distribuição de idade."""
+    fig = px.histogram(
+        df, x='age_in_years', nbins=20, title="Distribuição de Idade dos Solicitantes",
+        labels={'age_in_years': 'Idade', 'count': 'Quantidade'},
+        color_discrete_sequence=['#3498db']
+    )
+    fig.update_layout(font=dict(size=14), height=400)
+    return fig
+
+def plot_personal_status(df):
+    """Gera um gráfico de barras do status pessoal e sexo."""
+    personal_status_counts = df['personal_status_sex'].value_counts()
+    fig = px.bar(
+        x=personal_status_counts.values, y=personal_status_counts.index, orientation='h',
+        title="Status Pessoal e Sexo", labels={'x': 'Quantidade', 'y': 'Status'},
+        color_discrete_sequence=['#9b59b6']
+    )
+    fig.update_layout(font=dict(size=14), height=400)
+    return fig
+
+def plot_credit_amount_distribution(df):
+    """Gera um histograma da distribuição do valor do crédito."""
+    fig = px.histogram(
+        df, x='credit_amount', nbins=30, title="Distribuição do Valor do Crédito",
+        labels={'credit_amount': 'Valor do Crédito (DM)', 'count': 'Quantidade'},
+        color_discrete_sequence=['#f39c12']
+    )
+    fig.update_layout(font=dict(size=14), height=400)
+    return fig
+
+def plot_credit_vs_duration(df):
+    """Gera um gráfico de dispersão de valor do crédito vs duração."""
+    fig = px.scatter(
+        df, x='credit_amount', y='duration_in_month', color='risk',
+        title="Valor do Crédito vs Duração",
+        labels={'credit_amount': 'Valor do Crédito (DM)', 'duration_in_month': 'Duração (meses)'},
+        color_discrete_map={'Good Risk': '#2ecc71', 'Bad Risk': '#e74c3c'}
+    )
+    fig.update_layout(font=dict(size=14), height=400)
+    return fig
+
+def plot_purpose_distribution(df):
+    """Gera um gráfico de barras da distribuição do propósito do crédito."""
+    purpose_counts = df['purpose'].value_counts()
+    fig = px.bar(
+        x=purpose_counts.values, y=purpose_counts.index, orientation='h', title="Propósito do Crédito",
+        labels={'x': 'Quantidade', 'y': 'Propósito'},
+        color_discrete_sequence=['#1abc9c']
+    )
+    fig.update_layout(font=dict(size=14), height=500)
+    return fig
+
+def plot_housing_type_distribution(df):
+    """Gera um gráfico de pizza da distribuição do tipo de habitação."""
+    housing_counts = df['housing_type'].value_counts()
+    fig = px.pie(
+        values=housing_counts.values, names=housing_counts.index, title="Tipo de Habitação",
+        color_discrete_sequence=['#ff6b6b', '#4ecdc4', '#45b7d1']
+    )
+    fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_layout(font=dict(size=14), height=400)
+    return fig
+
+def plot_risk_by_category(df, category_col, title_suffix, x_label):
+    """Gera um gráfico de barras empilhadas de risco por categoria genérica."""
+    if df[category_col].empty or df['risk'].empty:
+        return px.bar(title=f"Dados insuficientes para Risco por {x_label}")
+
+    risk_by_cat = pd.crosstab(df[category_col], df['risk'], normalize='index') * 100
+    
+    # Garante que todas as categorias de risco estejam presentes para evitar KeyError no melt
+    all_risks = ['Good Risk', 'Bad Risk']
+    for r in all_risks:
+        if r not in risk_by_cat.columns:
+            risk_by_cat[r] = 0.0
+    risk_by_cat = risk_by_cat[all_risks] # Garante a ordem das colunas
+
+    risk_by_cat_long = risk_by_cat.reset_index().melt(
+        id_vars=category_col, value_name='percentual', var_name='risk'
+    )
+
+    fig = px.bar(
+        risk_by_cat_long,
+        x=category_col,
+        y='percentual',
+        color='risk',
+        title=f"Distribuição de Risco por {title_suffix} (%)",
+        labels={category_col: x_label, 'percentual': 'Percentual (%)'},
+        color_discrete_map={'Good Risk': '#2ecc71', 'Bad Risk': '#e74c3c'}
+    )
+    fig.update_layout(barmode='stack', font=dict(size=12), height=400, xaxis_tickangle=-45)
+    return fig
+
+# --- 4. Carregamento e Filtragem de Dados ---
 df = load_data()
 
-# Título principal
 st.markdown('<h1 class="main-header">German Credit Data Dashboard</h1>', unsafe_allow_html=True)
 
-# Informações sobre o dataset
 st.markdown("""
 <div class="info-box">
 <h3>Sobre o Dataset</h3>
@@ -110,13 +268,15 @@ com base em 20 atributos diferentes.
 </div>
 """, unsafe_allow_html=True)
 
-# Sidebar com filtros
 st.sidebar.markdown("## Filtros")
 
+# Garante que os valores únicos de 'risk' sejam obtidos do DataFrame original
+# para que o multiselect sempre tenha todas as opções, mesmo que filtradas.
+all_risks = df['risk'].unique().tolist()
 risk_filter = st.sidebar.multiselect(
     "Selecione o tipo de risco:",
-    options=df['risk'].unique(),
-    default=df['risk'].unique()
+    options=all_risks,
+    default=all_risks
 )
 
 age_range = st.sidebar.slider(
@@ -133,21 +293,25 @@ credit_range = st.sidebar.slider(
     value=(int(df['credit_amount'].min()), int(df['credit_amount'].max()))
 )
 
-# Aplicar filtros
-if not risk_filter:
-    filtered_df = pd.DataFrame()
+# Aplicar filtros de forma robusta
+filtered_df = df.copy() # Trabalha em uma cópia para não modificar o df original
+
+if risk_filter:
+    filtered_df = filtered_df[filtered_df['risk'].isin(risk_filter)]
 else:
-    filtered_df = df[
-        (df['risk'].isin(risk_filter)) &
-        (df['age_in_years'] >= age_range[0]) &
-        (df['age_in_years'] <= age_range[1]) &
-        (df['credit_amount'] >= credit_range[0]) &
-        (df['credit_amount'] <= credit_range[1])
+    filtered_df = pd.DataFrame() # Se nenhum risco for selecionado, o DF fica vazio
+
+if not filtered_df.empty:
+    filtered_df = filtered_df[
+        (filtered_df['age_in_years'] >= age_range[0]) &
+        (filtered_df['age_in_years'] <= age_range[1]) &
+        (filtered_df['credit_amount'] >= credit_range[0]) &
+        (filtered_df['credit_amount'] <= credit_range[1])
     ]
 
 st.sidebar.markdown(f"**Registros exibidos:** {len(filtered_df)} de {len(df)}")
 
-# --- Seção principal ---
+# --- 5. Seção Principal do Dashboard ---
 if filtered_df.empty:
     st.warning("Por favor, selecione ao menos um tipo de risco ou ajuste os filtros para exibir dados.")
 else:
@@ -155,16 +319,21 @@ else:
     st.markdown('<h2 class="sub-header">Métricas Principais</h2>', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
 
+    total_applicants = len(filtered_df)
+    good_risk_count = (filtered_df['risk'] == 'Good Risk').sum()
+    good_risk_pct = (good_risk_count / total_applicants * 100) if total_applicants > 0 else 0.0
+    avg_age = filtered_df['age_in_years'].mean()
+    avg_credit = filtered_df['credit_amount'].mean()
+
     with col1:
         st.markdown(f"""
         <div class="metric-container">
-            <div class="metric-value">{len(filtered_df):,}</div>
+            <div class="metric-value">{total_applicants:,}</div>
             <div class="metric-label">Total de Solicitantes</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
-        good_risk_pct = (filtered_df['risk'] == 'Good Risk').sum() / len(filtered_df) * 100 if 'Good Risk' in filtered_df['risk'].unique() else 0.0
         st.markdown(f"""
         <div class="metric-container">
             <div class="metric-value">{good_risk_pct:.1f}%</div>
@@ -173,7 +342,6 @@ else:
         """, unsafe_allow_html=True)
 
     with col3:
-        avg_age = filtered_df['age_in_years'].mean()
         st.markdown(f"""
         <div class="metric-container">
             <div class="metric-value">{avg_age:.1f}</div>
@@ -182,7 +350,6 @@ else:
         """, unsafe_allow_html=True)
 
     with col4:
-        avg_credit = filtered_df['credit_amount'].mean()
         st.markdown(f"""
         <div class="metric-container">
             <div class="metric-value">{avg_credit:,.0f} DM</div>
@@ -198,45 +365,12 @@ else:
         col1, col2 = st.columns(2)
 
         with col1:
-            risk_counts = filtered_df['risk'].value_counts()
-            fig_risk = px.pie(
-                values=risk_counts.values,
-                names=risk_counts.index,
-                title="Distribuição de Risco de Crédito",
-                color_discrete_map={'Good Risk': '#2ecc71', 'Bad Risk': '#e74c3c'}
-            )
-            fig_risk.update_traces(textposition='inside', textinfo='percent+label')
-            fig_risk.update_layout(font=dict(size=14), showlegend=True, height=400)
-            st.plotly_chart(fig_risk, use_container_width=True)
+            st.plotly_chart(plot_risk_distribution(filtered_df), use_container_width=True)
 
         with col2:
-            # --- CORREÇÃO FINAL APLICADA AQUI ---
-            # 1. Usamos 'labels' para que pd.cut já crie textos legíveis em vez de 'Intervals'
-            age_bins = pd.cut(
-                filtered_df['age_in_years'], 
-                bins=5, 
-                right=False, 
-                labels=['18-30', '31-40', '41-50', '51-60', '61+']
-            )
-            
-            # 2. Damos um nome à nossa série de faixas etárias para evitar o erro no .melt()
-            age_bins.name = 'age_bins'
-            
-            risk_by_age = pd.crosstab(age_bins, filtered_df['risk'], normalize='index') * 100
-            risk_by_age_long = risk_by_age.reset_index().melt(id_vars='age_bins', value_name='percentual', var_name='risk')
+            st.plotly_chart(plot_risk_by_age(filtered_df), use_container_width=True)
 
-            fig_age_risk = px.bar(
-                risk_by_age_long,
-                x='age_bins',
-                y='percentual',
-                color='risk',
-                title="Distribuição de Risco por Faixa Etária (%)",
-                labels={'age_bins': 'Faixa Etária', 'percentual': 'Percentual (%)'},
-                color_discrete_map={'Good Risk': '#2ecc71', 'Bad Risk': '#e74c3c'}
-            )
-            fig_age_risk.update_layout(barmode='stack', font=dict(size=14), height=400)
-            st.plotly_chart(fig_age_risk, use_container_width=True)
-
+        # Insight principal de risco
         if 'Bad Risk' in filtered_df['risk'].unique():
             bad_risk_pct_val = (filtered_df['risk'] == 'Bad Risk').mean() * 100
             st.markdown(f"""
@@ -246,74 +380,43 @@ else:
             A análise por faixa etária tende a mostrar que clientes mais jovens têm maior proporção de mau risco.
             </div>
             """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div class="insight-box">
+            <h4>Insight Principal</h4>
+            Não há dados de 'Mau Risco' para análise com os filtros atuais.
+            </div>
+            """, unsafe_allow_html=True)
 
     with tab2:
         st.markdown('<h2 class="sub-header">Análise Demográfica</h2>', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
 
         with col1:
-            fig_age = px.histogram(
-                filtered_df, x='age_in_years', nbins=20, title="Distribuição de Idade dos Solicitantes",
-                labels={'age_in_years': 'Idade', 'count': 'Quantidade'}, color_discrete_sequence=['#3498db']
-            )
-            fig_age.update_layout(font=dict(size=14), height=400)
-            st.plotly_chart(fig_age, use_container_width=True)
+            st.plotly_chart(plot_age_distribution(filtered_df), use_container_width=True)
 
         with col2:
-            personal_status_counts = filtered_df['personal_status_sex'].value_counts()
-            fig_personal = px.bar(
-                x=personal_status_counts.values, y=personal_status_counts.index, orientation='h',
-                title="Status Pessoal e Sexo", labels={'x': 'Quantidade', 'y': 'Status'},
-                color_discrete_sequence=['#9b59b6']
-            )
-            fig_personal.update_layout(font=dict(size=14), height=400)
-            st.plotly_chart(fig_personal, use_container_width=True)
+            st.plotly_chart(plot_personal_status(filtered_df), use_container_width=True)
 
     with tab3:
         st.markdown('<h2 class="sub-header">Análise Financeira</h2>', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
 
         with col1:
-            fig_credit = px.histogram(
-                filtered_df, x='credit_amount', nbins=30, title="Distribuição do Valor do Crédito",
-                labels={'credit_amount': 'Valor do Crédito (DM)', 'count': 'Quantidade'},
-                color_discrete_sequence=['#f39c12']
-            )
-            fig_credit.update_layout(font=dict(size=14), height=400)
-            st.plotly_chart(fig_credit, use_container_width=True)
+            st.plotly_chart(plot_credit_amount_distribution(filtered_df), use_container_width=True)
 
         with col2:
-            fig_scatter = px.scatter(
-                filtered_df, x='credit_amount', y='duration_in_month', color='risk',
-                title="Valor do Crédito vs Duração",
-                labels={'credit_amount': 'Valor do Crédito (DM)', 'duration_in_month': 'Duração (meses)'},
-                color_discrete_map={'Good Risk': '#2ecc71', 'Bad Risk': '#e74c3c'}
-            )
-            fig_scatter.update_layout(font=dict(size=14), height=400)
-            st.plotly_chart(fig_scatter, use_container_width=True)
+            st.plotly_chart(plot_credit_vs_duration(filtered_df), use_container_width=True)
 
     with tab4:
         st.markdown('<h2 class="sub-header">Características Sociais</h2>', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
 
         with col1:
-            purpose_counts = filtered_df['purpose'].value_counts()
-            fig_purpose = px.bar(
-                x=purpose_counts.values, y=purpose_counts.index, orientation='h', title="Propósito do Crédito",
-                labels={'x': 'Quantidade', 'y': 'Propósito'}, color_discrete_sequence=['#1abc9c']
-            )
-            fig_purpose.update_layout(font=dict(size=14), height=500)
-            st.plotly_chart(fig_purpose, use_container_width=True)
+            st.plotly_chart(plot_purpose_distribution(filtered_df), use_container_width=True)
 
         with col2:
-            housing_counts = filtered_df['housing_type'].value_counts()
-            fig_housing = px.pie(
-                values=housing_counts.values, names=housing_counts.index, title="Tipo de Habitação",
-                color_discrete_sequence=['#ff6b6b', '#4ecdc4', '#45b7d1']
-            )
-            fig_housing.update_traces(textposition='inside', textinfo='percent+label')
-            fig_housing.update_layout(font=dict(size=14), height=400)
-            st.plotly_chart(fig_housing, use_container_width=True)
+            st.plotly_chart(plot_housing_type_distribution(filtered_df), use_container_width=True)
 
     # Seção de análise avançada
     st.markdown('<h2 class="sub-header">Análise Avançada</h2>', unsafe_allow_html=True)
@@ -322,36 +425,10 @@ else:
     col1, col2 = st.columns(2)
 
     with col1:
-        risk_by_purpose = pd.crosstab(filtered_df['purpose'], filtered_df['risk'], normalize='index') * 100
-        risk_by_purpose_long = risk_by_purpose.reset_index().melt(id_vars='purpose', value_name='percentual', var_name='risk')
-
-        fig_risk_purpose = px.bar(
-            risk_by_purpose_long,
-            x='purpose',
-            y='percentual',
-            color='risk',
-            title="Distribuição de Risco por Propósito (%)",
-            labels={'purpose': 'Propósito', 'percentual': 'Percentual (%)'},
-            color_discrete_map={'Good Risk': '#2ecc71', 'Bad Risk': '#e74c3c'}
-        )
-        fig_risk_purpose.update_layout(barmode='stack', font=dict(size=12), height=400, xaxis_tickangle=-45)
-        st.plotly_chart(fig_risk_purpose, use_container_width=True)
+        st.plotly_chart(plot_risk_by_category(filtered_df, 'purpose', 'Propósito', 'Propósito'), use_container_width=True)
 
     with col2:
-        risk_by_employment = pd.crosstab(filtered_df['employment_status'], filtered_df['risk'], normalize='index') * 100
-        risk_by_employment_long = risk_by_employment.reset_index().melt(id_vars='employment_status', value_name='percentual', var_name='risk')
-
-        fig_risk_employment = px.bar(
-            risk_by_employment_long,
-            x='employment_status',
-            y='percentual',
-            color='risk',
-            title="Distribuição de Risco por Status de Emprego (%)",
-            labels={'employment_status': 'Status de Emprego', 'percentual': 'Percentual (%)'},
-            color_discrete_map={'Good Risk': '#2ecc71', 'Bad Risk': '#e74c3c'}
-        )
-        fig_risk_employment.update_layout(barmode='stack', font=dict(size=12), height=400, xaxis_tickangle=-45)
-        st.plotly_chart(fig_risk_employment, use_container_width=True)
+        st.plotly_chart(plot_risk_by_category(filtered_df, 'employment_status', 'Status de Emprego', 'Status de Emprego'), use_container_width=True)
 
     # Rodapé
     st.markdown("---")
@@ -361,3 +438,5 @@ else:
         Dados: UCI Machine Learning Repository
     </div>
     """, unsafe_allow_html=True)
+
+
