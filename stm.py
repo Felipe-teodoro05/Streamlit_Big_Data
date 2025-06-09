@@ -201,7 +201,7 @@ with col4:
     """, unsafe_allow_html=True)
 
 # Abas para organizar o conteúdo
-tab1, tab2, tab3, tab4 = st.tabs(["Análise de Risco", "👥 Demografia", "💰 Análise Financeira", "🏠 Características Sociais"])
+tab1, tab2, tab3, tab4 = st.tabs(["Análise de Risco", "Demografia", "Análise Financeira", "Características Sociais"])
 
 with tab1:
     st.markdown('<h2 class="sub-header">Análise de Risco de Crédito</h2>', unsafe_allow_html=True)
@@ -255,7 +255,7 @@ with tab1:
     """, unsafe_allow_html=True)
 
 with tab2:
-    st.markdown('<h2 class="sub-header">👥 Análise Demográfica</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header">Análise Demográfica</h2>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
