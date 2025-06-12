@@ -23,7 +23,7 @@ CARD_GRADIENT_2 = "linear-gradient(135deg, #27AE60 0%, #16A085 100%)"
 CARD_GRADIENT_3 = "linear-gradient(135deg, #E74C3C 0%, #C0392B 100%)"
 CARD_GRADIENT_4 = "linear-gradient(135deg, #F39C12 0%, #D35400 100%)"
 
-# --- Estilos CSS com Nova Paleta ---
+# --- Estilos CSS ---
 st.markdown(f"""
 <style>
     /* Fontes e estrutura */
